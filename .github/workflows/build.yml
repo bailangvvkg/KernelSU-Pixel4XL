@@ -68,9 +68,9 @@ jobs:
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- kernel_defconfig
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
 
-      # 8. 打包并上传内核镜像
-      - name: Upload Kernel to Release
-        uses: gh-actions/upload-artifact@v2
+      # 8. 上传内核镜像作为构建产物
+      - name: Upload Kernel as artifact
+        uses: actions/upload-artifact@v3
         with:
           name: kernel_image
           path: ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image
@@ -80,7 +80,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          latest_version=$(date +'%Y%m%d%H%M%S')  # Use timestamp as version for release
+          latest_version=$(date +'%Y%m%d%H%M%S')  # 使用时间戳作为版本号
           gh release create "v${latest_version}" \
             ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
             --title "KernelSU-Pixel4XL Build v${latest_version}" \
