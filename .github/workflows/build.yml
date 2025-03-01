@@ -22,6 +22,8 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
+          distribution: 'adoptopenjdk'  # 你可以选择不同的 JDK 发行版，如 adoptopenjdk, zulu, openjdk 等
+
 
       # 3. 安装依赖
       - name: Install build dependencies
