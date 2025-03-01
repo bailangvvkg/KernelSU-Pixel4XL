@@ -52,6 +52,26 @@ jobs:
           # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
 
+      - name: Install repo tool
+        run: |
+          # Download and install the repo tool
+          mkdir -p ~/bin
+          curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+          chmod a+x ~/bin/repo
+          export PATH=~/bin:$PATH
+      
+      - name: Initialize and sync Android source
+        run: |
+          mkdir -p ~/android
+          cd ~/android
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
+          repo sync -j$(nproc)  # Shallow clone
+        env:
+          JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
+          JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
+          BUILD_PATH: /home/runner/work/KernelSU-Pixel4XL/KernelSU-Pixel4XL
+
+
 
       # 4. 下载 Android 源代码（使用浅克隆）
       - name: Download Android source code
