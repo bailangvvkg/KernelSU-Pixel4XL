@@ -47,14 +47,13 @@ jobs:
         run: |
           curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod +x /usr/local/bin/repo
-      
+
       - name: Download Android source code (using shallow clone)
         run: |
           mkdir -p ~/android
           cd ~/android
-          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29  # Adjusted branch
-          repo sync -j$(nproc) --depth=1  # Shallow clone
-
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
+          repo sync -j$(nproc) --shallow
 
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
