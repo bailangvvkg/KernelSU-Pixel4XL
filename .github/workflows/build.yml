@@ -26,7 +26,6 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      # 3. 安装构建依赖环境
       - name: Initialization Environment(安装依赖环境)
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -37,40 +36,22 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-
+      
           # Install common dependencies
-          sudo -E apt -yqq install dos2unix libfuse-dev
-
-          # Add necessary repositories for `repo` and `android-tools`
-          sudo -E apt-get install -y software-properties-common
-          sudo -E add-apt-repository ppa:openjdk-r/ppa
-          sudo -E add-apt-repository ppa:deadsnakes/ppa
-
-          # Add Android tools repository (if needed)
-          sudo -E apt-get install -y wget
-          wget -q https://dl.google.com/linux/direct/android-studio-ide-202.xxxxxxx-linux.tar.gz
-          tar -xvzf android-studio-ide-202.xxxxxxx-linux.tar.gz
-
-          # Install clang and other dependencies
-          sudo -E apt-get install -y clang-15 repo python3 python3-pip curl
-
-          # Install Android tools (adb, fastboot, etc.)
-          sudo -E apt-get install -y android-tools-adb android-tools-fastboot
-
-          # Install other dependencies (git, make, gcc, etc.)
-          sudo -E apt-get install -y \
-            git \
-            make \
-            gcc \
-            clang \
-            python3-pip \
-            curl
-
+          sudo -E apt -yqq install dos2unix libfuse-dev wget curl
+      
+          # Install clang, repo, android tools
+          sudo -E apt-get install -y clang-15 python3 python3-pip android-tools-adb android-tools-fastboot git make gcc
+      
+          # Remove problematic PPA if it's added
+          sudo -E add-apt-repository --remove ppa:deadsnakes/ppa
+      
           # Set timezone
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-
+      
           # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
+
 
       # 4. 下载 Android 源代码（使用浅克隆）
       - name: Download Android source code
