@@ -58,10 +58,12 @@ jobs:
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
-          export PATH=~/bin:$PATH
-      
+          export PATH=~/bin:$PATH  # Add repo tool to PATH
+          echo "PATH=$PATH"  # Debugging: print PATH to verify it's added
+
       - name: Initialize and sync Android source
         run: |
+          export PATH=~/bin:$PATH  # Ensure that repo is available in this step
           mkdir -p ~/android
           cd ~/android
           repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
