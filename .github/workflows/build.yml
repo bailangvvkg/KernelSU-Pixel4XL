@@ -70,7 +70,7 @@ jobs:
 
       # 8. 上传内核镜像作为构建产物
       - name: Upload Kernel as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2  # 使用 v2 版本
         with:
           name: kernel_image
           path: ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image
