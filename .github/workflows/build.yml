@@ -68,20 +68,25 @@ jobs:
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- kernel_defconfig
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
 
-      # 8. 上传内核镜像作为构建产物
-      - name: Upload Kernel as artifact
-        uses: actions/upload-artifact@v3  # 使用 v3 版本
-        with:
-          name: kernel_image
-          path: ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image
-
-      # 9. 创建 GitHub Release
-      - name: Create GitHub Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 8. 上传内核镜像作为构建产物 (使用 curl 直接上传到 GitHub)
+      - name: Upload Kernel Image to GitHub Release
         run: |
+          # 获取 GitHub 仓库信息
           latest_version=$(date +'%Y%m%d%H%M%S')  # 使用时间戳作为版本号
-          gh release create "v${latest_version}" \
-            ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
-            --title "KernelSU-Pixel4XL Build v${latest_version}" \
-            --notes "Automated build for Pixel 4 XL with KernelSU."
+          
+          # 使用 GitHub API 创建一个新的 Release
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{\"tag_name\": \"v${latest_version}\", \"name\": \"KernelSU-Pixel4XL Build v${latest_version}\", \"body\": \"Automated build for Pixel 4 XL with KernelSU.\"}" \
+            https://api.github.com/repos/${{ github.repository }}/releases
+
+          # 获取上传的 Release ID
+          release_id=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository }}/releases/tags/v${latest_version} | jq -r .id)
+          
+          # 上传文件
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
+            "https://uploads.github.com/repos/${{ github.repository }}/releases/${release_id}/assets?name=Image"
+
