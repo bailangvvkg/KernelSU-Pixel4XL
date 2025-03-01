@@ -13,6 +13,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 3. 合并磁盘空间
+      - name: Combine Disks (合并磁盘空间)
+        uses: easimon/maximize-build-space@master
+        with:
+          swap-size-mb: 2048
+          temp-reserve-mb: 100
+          root-reserve-mb: 2048
+    
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
@@ -52,6 +60,14 @@ jobs:
           # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
 
+      # Clean up apt cache and remove unnecessary files
+      - name: Clean up apt cache and remove unnecessary packages
+        run: |
+          sudo apt-get clean
+          sudo rm -rf /var/lib/apt/lists/*
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean
+
       - name: Install repo tool
         run: |
           # Download and install the repo tool
@@ -67,11 +83,7 @@ jobs:
           mkdir -p ~/android
           cd ~/android
           repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
-          repo sync -j$(nproc)  # Shallow clone
-        env:
-          JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
-          JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
-          BUILD_PATH: /home/runner/work/KernelSU-Pixel4XL/KernelSU-Pixel4XL
+          repo sync -j$(nproc) --depth=1  # Shallow clone to save space
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
       - name: Clone KernelSU-Pixel4XL repository
