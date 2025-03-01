@@ -13,14 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 3. 合并磁盘空间
-      - name: Combine Disks (合并磁盘空间)
+      - name: Combine Disks(合并磁盘)
         uses: easimon/maximize-build-space@master
         with:
           swap-size-mb: 2048
           temp-reserve-mb: 100
           root-reserve-mb: 2048
-    
+
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,29 +43,21 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-      
+          
           # Install common dependencies
           sudo -E apt -yqq install dos2unix libfuse-dev wget curl
-      
+          
           # Install clang, repo, android tools
           sudo -E apt-get install -y clang-15 python3 python3-pip android-tools-adb android-tools-fastboot git make gcc
-      
+          
           # Remove problematic PPA if it's added
           sudo -E add-apt-repository --remove ppa:deadsnakes/ppa
-      
+          
           # Set timezone
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-      
+          
           # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
-
-      # Clean up apt cache and remove unnecessary files
-      - name: Clean up apt cache and remove unnecessary packages
-        run: |
-          sudo apt-get clean
-          sudo rm -rf /var/lib/apt/lists/*
-          sudo apt-get autoremove -y
-          sudo apt-get autoclean
 
       - name: Install repo tool
         run: |
@@ -74,21 +65,22 @@ jobs:
           mkdir -p ~/bin
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
           chmod a+x ~/bin/repo
-          export PATH=~/bin:$PATH  # Add repo tool to PATH
-          echo "PATH=$PATH"  # Debugging: print PATH to verify it's added
+          export PATH=~/bin:$PATH
 
       - name: Initialize and sync Android source
         run: |
-          export PATH=~/bin:$PATH  # Ensure that repo is available in this step
           mkdir -p ~/android
-          cd ~/android
+          cd $BUILD_PATH
           repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
-          repo sync -j$(nproc) --depth=1  # Shallow clone to save space
+          repo sync -j$(nproc)  # Shallow clone
+        env:
+          JAVA_HOME: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
+          JAVA_HOME_21_X64: /opt/hostedtoolcache/Java_Zulu_jdk/21.0.6-7/x64
+          BUILD_PATH: /home/runner/work/KernelSU-Pixel4XL/KernelSU-Pixel4XL
 
-      # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
       - name: Clone KernelSU-Pixel4XL repository
         run: |
-          cd ~/android
+          cd $BUILD_PATH
           git clone --depth 1 https://github.com/msnx/KernelSU-Pixel4XL.git
           cd KernelSU-Pixel4XL
 
@@ -102,7 +94,7 @@ jobs:
       # 7. 编译内核
       - name: Build Kernel
         run: |
-          cd ~/android/KernelSU-Pixel4XL
+          cd $BUILD_PATH/KernelSU-Pixel4XL
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- kernel_defconfig
           make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
 
@@ -125,5 +117,5 @@ jobs:
           curl -X POST \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -H "Content-Type: application/octet-stream" \
-            --data-binary @~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
+            --data-binary @$BUILD_PATH/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
             "https://uploads.github.com/repos/${{ github.repository }}/releases/${release_id}/assets?name=Image"
