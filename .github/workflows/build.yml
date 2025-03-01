@@ -43,9 +43,9 @@ jobs:
             android-tools-adb \
             curl
 
-      - name: Update repo tool
+      - name: Install the repo tool
         run: |
-          curl https://storage.googleapis.com/git-repo-downloads/repo-2.50 > /usr/local/bin/repo
+          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
           chmod +x /usr/local/bin/repo
       
       - name: Download Android source code (using shallow clone)
@@ -54,6 +54,7 @@ jobs:
           cd ~/android
           repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29  # Adjusted branch
           repo sync -j$(nproc) --depth=1  # Shallow clone
+
 
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
