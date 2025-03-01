@@ -1,0 +1,87 @@
+name: KernelSU-Pixel4XL Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      # 2. 设置编译环境
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+
+      # 3. 安装依赖
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git \
+            make \
+            gcc \
+            clang \
+            repo \
+            python3 \
+            python3-pip \
+            android-tools-fastboot \
+            android-tools-adb \
+            curl
+
+      # 4. 下载 Android 源代码
+      - name: Download Android source code
+        run: |
+          mkdir -p ~/android
+          cd ~/android
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r25
+          repo sync -j$(nproc)
+
+      # 5. 克隆 KernelSU-Pixel4XL 仓库
+      - name: Clone KernelSU-Pixel4XL repository
+        run: |
+          cd ~/android
+          git clone https://github.com/msnx/KernelSU-Pixel4XL.git
+          cd KernelSU-Pixel4XL
+
+      # 6. 配置编译环境
+      - name: Set up environment variables for kernel compilation
+        run: |
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-android-
+
+      # 7. 编译内核
+      - name: Build Kernel
+        run: |
+          cd ~/android/KernelSU-Pixel4XL
+          make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android- kernel_defconfig
+          make -j$(nproc) O=out ARCH=arm64 CROSS_COMPILE=aarch64-linux-android-
+
+      # 8. 打包并上传内核镜像
+      - name: Upload Kernel to Release
+        uses: gh-actions/upload-artifact@v2
+        with:
+          name: kernel_image
+          path: ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image
+
+      # 9. 创建 GitHub Release
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          latest_version=$(date +'%Y%m%d%H%M%S')  # Use timestamp as version for release
+          gh release create "v${latest_version}" \
+            ~/android/KernelSU-Pixel4XL/out/arch/arm64/boot/Image \
+            --title "KernelSU-Pixel4XL Build v${latest_version}" \
+            --notes "Automated build for Pixel 4 XL with KernelSU."
