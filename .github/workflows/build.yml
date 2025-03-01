@@ -43,13 +43,18 @@ jobs:
             android-tools-adb \
             curl
 
-      # 4. 下载 Android 源代码（使用浅克隆）
-      - name: Download Android source code
+      - name: Update repo tool
+        run: |
+          curl https://storage.googleapis.com/git-repo-downloads/repo-2.50 > /usr/local/bin/repo
+          chmod +x /usr/local/bin/repo
+      
+      - name: Download Android source code (using shallow clone)
         run: |
           mkdir -p ~/android
           cd ~/android
-          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r25
-          repo sync -j$(nproc) --depth=1  # 浅克隆
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29  # Adjusted branch
+          repo sync -j$(nproc) --depth=1  # Shallow clone
+
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
       - name: Clone KernelSU-Pixel4XL repository
