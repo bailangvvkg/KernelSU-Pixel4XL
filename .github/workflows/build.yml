@@ -11,52 +11,23 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-
-      # Step 1: Free Disk Space
-      - name: Free Disk Space(清理磁盘空间)
-        uses: endersonmenezes/free-disk-space@main
-        with:
-          testing: false
-          remove_android: true
-          remove_dotnet: true
-          remove_haskell: true
-          remove_tool_cache: true
-          remove_swap: true
-          remove_packages: "android* azure* clang* dotnet* firefox* ghc* golang* google* libclang* libgl1* lld* llvm* \
-            microsoft* mongodb* mono* mysql* nodejs* openjdk* php* postgresql* powershell* snap* temurin* yarn* zulu*"
-          remove_packages_one_command: true
-          remove_folders: "/etc/apt/sources.list.d* /etc/mono* /etc/mysql* /usr/include/linux/android* /usr/lib/llvm* /usr/lib/mono* \
-            /usr/local/lib/android* /usr/local/lib/node_modules* /usr/local/share/chromium* /usr/local/share/powershell* \
-            /usr/local/share/vcpkg/ports/azure* /usr/local/share/vcpkg/ports/google* /usr/local/share/vcpkg/ports/libpq/android* \
-            /usr/local/share/vcpkg/ports/llvm* /usr/local/share/vcpkg/ports/mysql* /usr/local/share/vcpkg/ports/snap* \
-            /usr/share/azure* /usr/share/dotnet* /usr/share/glade* /usr/share/miniconda* /usr/share/php* /usr/share/swift \
-            /var/lib/mysql* /var/log/azure*"
-
-      # # Step 2: Combine Disks (合并磁盘)
-      # - name: Combine Disks(合并磁盘)
-      #   uses: easimon/maximize-build-space@master
-      #   with:
-      #     swap-size-mb: 2048
-      #     temp-reserve-mb: 100
-      #     root-reserve-mb: 2048
-    
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 1  # 浅克隆，只获取最新的一次提交
 
-      # # 2. 设置编译环境
+      # 2. 设置编译环境
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '21'
 
-
-      # 3. 安装依赖
-     - name: Initialization Environment(安装依赖环境)
+      # 3. 安装构建依赖环境
+      - name: Initialization Environment(安装依赖环境)
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -66,26 +37,26 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-      
+
           # Install common dependencies
           sudo -E apt -yqq install dos2unix libfuse-dev
-      
+
           # Add necessary repositories for `repo` and `android-tools`
           sudo -E apt-get install -y software-properties-common
           sudo -E add-apt-repository ppa:openjdk-r/ppa
           sudo -E add-apt-repository ppa:deadsnakes/ppa
-      
+
           # Add Android tools repository (if needed)
           sudo -E apt-get install -y wget
           wget -q https://dl.google.com/linux/direct/android-studio-ide-202.xxxxxxx-linux.tar.gz
           tar -xvzf android-studio-ide-202.xxxxxxx-linux.tar.gz
-      
+
           # Install clang and other dependencies
           sudo -E apt-get install -y clang-15 repo python3 python3-pip curl
-      
+
           # Install Android tools (adb, fastboot, etc.)
           sudo -E apt-get install -y android-tools-adb android-tools-fastboot
-      
+
           # Install other dependencies (git, make, gcc, etc.)
           sudo -E apt-get install -y \
             git \
@@ -94,27 +65,20 @@ jobs:
             clang \
             python3-pip \
             curl
-      
+
           # Set timezone
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-      
+
           # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
 
-
-      - name: Install the repo tool
-        run: |
-          curl https://storage.googleapis.com/git-repo-downloads/repo > /usr/local/bin/repo
-          chmod +x /usr/local/bin/repo
-
-      - name: Download Android source code (using shallow clone)
+      # 4. 下载 Android 源代码（使用浅克隆）
+      - name: Download Android source code
         run: |
           mkdir -p ~/android
           cd ~/android
-          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29 --depth=1
-          repo sync -j$(nproc)  # No --depth here, it was set during repo init
-
-
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
+          repo sync -j$(nproc)  # Shallow clone
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
       - name: Clone KernelSU-Pixel4XL repository
