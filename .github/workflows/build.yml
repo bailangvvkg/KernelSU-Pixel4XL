@@ -22,7 +22,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-          distribution: 'openjdk'  # 使用 openjdk
+          distribution: 'adoptopenjdk'  # 尝试 adoptopenjdk 或 zulu，或者 openjdk 的具体版本
 
       # 3. 安装依赖
       - name: Install build dependencies
