@@ -52,8 +52,9 @@ jobs:
         run: |
           mkdir -p ~/android
           cd ~/android
-          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29
-          repo sync -j$(nproc) --shallow
+          repo init -u https://android.googlesource.com/platform/manifest -b android-13.0.0_r29 --depth=1
+          repo sync -j$(nproc)  # No --depth here, it was set during repo init
+
 
 
       # 5. 克隆 KernelSU-Pixel4XL 仓库（使用浅克隆）
