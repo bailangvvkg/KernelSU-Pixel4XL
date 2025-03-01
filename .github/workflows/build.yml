@@ -56,22 +56,51 @@ jobs:
 
 
       # 3. 安装依赖
-      - name: Install build dependencies
+     - name: Initialization Environment(安装依赖环境)
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          # Update package lists
+          sudo -E apt -yqq update
+          sudo -E apt -yqq full-upgrade
+          sudo -E apt -yqq autoremove --purge
+          sudo -E apt -yqq autoclean
+          sudo -E apt -yqq clean
+      
+          # Install common dependencies
+          sudo -E apt -yqq install dos2unix libfuse-dev
+      
+          # Add necessary repositories for `repo` and `android-tools`
+          sudo -E apt-get install -y software-properties-common
+          sudo -E add-apt-repository ppa:openjdk-r/ppa
+          sudo -E add-apt-repository ppa:deadsnakes/ppa
+      
+          # Add Android tools repository (if needed)
+          sudo -E apt-get install -y wget
+          wget -q https://dl.google.com/linux/direct/android-studio-ide-202.xxxxxxx-linux.tar.gz
+          tar -xvzf android-studio-ide-202.xxxxxxx-linux.tar.gz
+      
+          # Install clang and other dependencies
+          sudo -E apt-get install -y clang-15 repo python3 python3-pip curl
+      
+          # Install Android tools (adb, fastboot, etc.)
+          sudo -E apt-get install -y android-tools-adb android-tools-fastboot
+      
+          # Install other dependencies (git, make, gcc, etc.)
+          sudo -E apt-get install -y \
             git \
             make \
             gcc \
             clang \
-            repo \
-            python3 \
             python3-pip \
-            android-tools-fastboot \
-            android-tools-adb \
             curl
-
+      
+          # Set timezone
+          sudo -E timedatectl set-timezone "Asia/Shanghai"
+      
+          # Export the build path as an environment variable
           echo "BUILD_PATH=$PWD" >> $GITHUB_ENV
+
 
       - name: Install the repo tool
         run: |
